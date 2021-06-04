@@ -16,6 +16,7 @@ from models.chat import Telegram
 from models.config import binanceConfigParser, binanceParseMarket, coinbaseProConfigParser, coinbaseProParseMarket, dummyConfigParser, dummyParseMarket, loggerConfigParser
 from models.ConfigBuilder import ConfigBuilder
 from models.helper.LogHelper import Logger
+from views.Gui import Gui
 
 # disable insecure ssl warning
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -32,6 +33,7 @@ def parse_arguments():
     parser.add_argument('--exchange', type=str, help="'coinbasepro', 'binance', 'dummy'")
     parser.add_argument('--granularity', type=str, help="coinbasepro: (60,300,900,3600,21600,86400), binance: (1m,5m,15m,1h,6h,1d)")
     parser.add_argument('--graphs', type=int, help='save graphs=1, do not save graphs=0')
+    parser.add_argument('--gui', type=int, help='show gui=1, hide gui=0')
     parser.add_argument('--live', type=int, help='live=1, test=0')
     parser.add_argument('--market', type=str, help='coinbasepro: BTC-GBP, binance: BTCGBP etc.')
     parser.add_argument('--sellatloss', type=int, help='toggle if bot should sell at a loss')
@@ -128,6 +130,7 @@ class PyCryptoBot():
         self.is_live = 0
         self.is_verbose = 0
         self.save_graphs = 0
+        self.use_gui = 0
         self.is_sim = 0
         self.simstartdate = None
         self.simenddate = None
@@ -475,6 +478,9 @@ class PyCryptoBot():
 
     def shouldSaveGraphs(self) -> bool:
         return self.save_graphs == 1
+
+    def useGui(self) -> bool:
+        return self.use_gui == 1
 
     def isSimulation(self) -> bool:
         return self.is_sim == 1

@@ -8,3 +8,4 @@ python-binance==0.7.9
 mock==4.0.3
 pytest==6.2.2
 pytest-mock==3.6.1
+rich==10.2.2

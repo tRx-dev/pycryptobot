@@ -13,6 +13,7 @@ from models.Trading import TechnicalAnalysis
 from models.TradingAccount import TradingAccount
 from models.helper.MarginHelper import calculate_margin
 from views.TradingGraphs import TradingGraphs
+from views.Gui import Gui
 from models.helper.LogHelper import Logger
 
 sys.tracebacklimit = 1
@@ -24,6 +25,7 @@ s = sched.scheduler(time.time, time.sleep)
 
 config = {}
 account = None
+
 if app.getLastAction() != None:
     state.last_action = app.getLastAction()
 
@@ -948,6 +950,23 @@ def executeJob(sc=None, app: PyCryptoBot = None, state: AppState = None, trading
             # poll every 2 minutes
             list(map(s.cancel, s.queue))
             s.enter(120, 1, executeJob, (sc, app, state))
+
+    if app.useGui():
+        layout = Gui.create_layout()
+        layout['header'].update(Gui.create_header(app.getVersionFromREADME()))
+        layout['current_price'].update(Gui.create_small_info_panel(str(price), 'Current Price', 'green'))
+        layout['current_market'].update(Gui.create_small_info_panel(app.getMarket(), 'Market', 'green'))
+        layout['granularity'].update(Gui.create_small_info_panel(app.printGranularity(), 'Granularity', 'yellow'))
+        layout['bull_bear'].update(Gui.create_small_info_panel(bullbeartext, 'BULL/BEAR', 'yellow'))
+        layout['buy_sell_status'].update(Gui.create_buy_sell_panel(margin, profit, state.action, state.last_action, 'Status', 'red'))
+
+        settings = [app.sellUpperPcnt(), app.sellLowerPcnt(), app.trailingStopLoss(), app.allowSellAtLoss(), app.sellAtResistance(), app.disableBullOnly(), app.disableBuyNearHigh(), app.disableBuyMACD(), app.disableBuyOBV(), app.disableBuyElderRay(), app.disableFailsafeFibonacciLow(), app.disableFailsafeLowerPcnt(), app.disableProfitbankReversal(), app.disabletelegram, app.disableLog(), app.disableTracker(), app.autoRestart(), app.getBuyMaxSize()]
+        layout['settings_info'].update(Gui.create_settings_panel(settings, 'Settings', 'yellow'))
+        
+        layout['footer'].update(Gui.create_footer(app.getExchange(), now))
+
+        # Print GUI
+        Gui.render_gui(layout)
 
 
 def main():

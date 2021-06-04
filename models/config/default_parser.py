@@ -36,6 +36,13 @@ def defaultConfigParse(app, config):
         else:
             raise TypeError('graphs must be of type int')
 
+    if 'gui' in config:
+        if isinstance(config['gui'], int):
+            if config['gui'] in [0, 1]:
+                app.use_gui = config['gui']
+        else:
+            raise TypeError('gui must be of type int')
+
     if 'sim' in config:
         if isinstance(config['sim'], str):
             if config['sim'] in [ 'slow', 'fast']:
