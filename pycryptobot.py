@@ -598,14 +598,19 @@ def executeJob(sc=None, app: PyCryptoBot = None, state: AppState = None, trading
 
                 if (ema12gtema26 is True and ema12gtema26co is True):
                     txt = '        Condition : EMA12 is currently crossing above EMA26'
+                    condition_ema_txt = 'EMA12 is currently crossing above EMA26'
                 elif (ema12gtema26 is True and ema12gtema26co is False):
                     txt = '        Condition : EMA12 is currently above EMA26 and has crossed over'
+                    condition_ema_txt = 'EMA12 is currently above EMA26 and has crossed over'
                 elif (ema12ltema26 is True and ema12ltema26co is True):
                     txt = '        Condition : EMA12 is currently crossing below EMA26'
+                    condition_ema_txt = 'EMA12 is currently crossing below EMA26'
                 elif (ema12ltema26 is True and ema12ltema26co is False):
                     txt = '        Condition : EMA12 is currently below EMA26 and has crossed over'
+                    condition_ema_txt = 'EMA12 is currently below EMA26 and has crossed over'
                 else:
                     txt = '        Condition : -'
+                    condition_ema_txt = '-'
                 Logger.info(' | ' + txt + (' ' * (75 - len(txt))) + ' | ')
 
                 txt = '            SMA20 : ' + truncate(float(df_last['sma20'].values[0]))
@@ -625,14 +630,19 @@ def executeJob(sc=None, app: PyCryptoBot = None, state: AppState = None, trading
 
                 if (macdgtsignal is True and macdgtsignalco is True):
                     txt = '        Condition : MACD is currently crossing above Signal'
+                    condition_macd_txt = 'MACD is currently crossing above Signal'
                 elif (macdgtsignal is True and macdgtsignalco is False):
                     txt = '        Condition : MACD is currently above Signal and has crossed over'
+                    condition_macd_txt = 'MACD is currently above Signal and has crossed over'
                 elif (macdltsignal is True and macdltsignalco is True):
                     txt = '        Condition : MACD is currently crossing below Signal'
+                    condition_macd_txt = 'MACD is currently crossing below Signal'
                 elif (macdltsignal is True and macdltsignalco is False):
                     txt = '        Condition : MACD is currently below Signal and has crossed over'
+                    condition_macd_txt = 'MACD is currently below Signal and has crossed over'
                 else:
                     txt = '        Condition : -'
+                    condition_macd_txt = '-'
                 Logger.info(' | ' + txt + (' ' * (75 - len(txt))) + ' | ')
 
                 Logger.info('--------------------------------------------------------------------------------')
@@ -896,11 +906,14 @@ def executeJob(sc=None, app: PyCryptoBot = None, state: AppState = None, trading
         layout['current_price'].update(Gui.create_small_info_panel(str(price), 'Current Price', 'green'))
         layout['current_market'].update(Gui.create_small_info_panel(app.getMarket(), 'Market', 'green'))
         layout['granularity'].update(Gui.create_small_info_panel(app.printGranularity(), 'Granularity', 'yellow'))
-        layout['bull_bear'].update(Gui.create_small_info_panel(bullbeartext, 'BULL/BEAR', 'yellow'))
-        layout['buy_sell_status'].update(Gui.create_buy_sell_panel(margin, profit, state.action, state.last_action, 'Status', 'red'))
+        layout['bull_bear'].update(Gui.create_small_info_panel(bullbeartext, 'Bull/Bear', 'yellow'))
+        layout['status'].update(Gui.create_status_panel(margin, profit, state.action, state.last_action, 'Status', 'red'))
 
         settings = [app.sellUpperPcnt(), app.sellLowerPcnt(), app.trailingStopLoss(), app.allowSellAtLoss(), app.sellAtResistance(), app.disableBullOnly(), app.disableBuyNearHigh(), app.disableBuyMACD(), app.disableBuyOBV(), app.disableBuyElderRay(), app.disableFailsafeFibonacciLow(), app.disableFailsafeLowerPcnt(), app.disableProfitbankReversal(), app.disabletelegram, app.disableLog(), app.disableTracker(), app.autoRestart(), app.getBuyMaxSize()]
-        layout['settings_info'].update(Gui.create_settings_panel(settings, 'Settings', 'yellow'))
+        layout['settings_info'].update(Gui.create_settings_panel(settings, 'Settings', 'red'))
+
+        info_values = [str(truncate(price)), str(truncate(float(df_last['ema12'].values[0]))), str(truncate(float(df_last['ema26'].values[0]))), str(truncate(float(df_last['sma20'].values[0]))), str(truncate(float(df_last['sma200'].values[0]))), str(ema12gtema26co), str(ema12gtema26), str(ema12ltema26co), str(ema12ltema26), condition_ema_txt, str(truncate(float(df_last['macd'].values[0]))), str(truncate(float(df_last['signal'].values[0]))), str(macdgtsignal), str(macdltsignal), condition_macd_txt]
+        layout['info'].update(Gui.create_info_panel(info_values))
         
         layout['footer'].update(Gui.create_footer(app.getExchange(), now))
 

@@ -1,6 +1,7 @@
 from datetime import datetime
+from numpy import exp
 from rich.console import Console
-from rich.table import Table, Column
+from rich.table import Row, Table, Column
 from rich import print
 from rich.layout import Layout
 from rich.panel import Panel
@@ -44,28 +45,85 @@ class Gui():
         
         grid = Table.grid(expand=True)
         grid.add_column(justify='center', ratio = 1)
+        if value == '':
+            value = 'None'
+
         grid.add_row(
             '[b]' + value + ' [/b]'
         )
         return Panel(grid, border_style=color, title='[b]' + title + '[/b]')
 
     # Create info panel
-    def create_info_panel(high, low, open) -> Panel:
+    def create_info_panel(values) -> Panel:
         '''Create Info panel'''
 
-        crypto_24h_panel = Table.grid(expand=True)
-        crypto_24h_panel.add_column('High', justify='center')
-        crypto_24h_panel.add_column('Low', justify='center')
-        crypto_24h_panel.add_column('Value', justify='center')
-        crypto_24h_panel.add_row('[b]High[/b]', '[b]Low[/b]', '[b]Open[/b]')
-        crypto_24h_panel.add_row('[green]' + str(high) + ' EUR', '[red]' + str(low) + ' EUR', '[cyan]' + str(open) + ' EUR')
+        info_panel_close = Table.grid(expand=True)
+        info_panel_close.add_column(justify='center')
+        info_panel_close.add_row('[b]Close[/b]')
+        info_panel_close.add_row(values[0])
 
-        highlow_table = Table.grid(expand=True)
-        highlow_table.add_row(
-            Panel(crypto_24h_panel, title='24H High/Low'),
+        info_panel_ema = Table.grid(expand=True)
+        info_panel_ema.add_column(justify='center')
+        info_panel_ema.add_column(justify='center')
+        info_panel_ema.add_row('[b]EMA12[/b]', '[b]EMA26[/b]')
+        info_panel_ema.add_row(values[1], values[2])
+        
+        info_panel_sma = Table.grid(expand=True)
+        info_panel_sma.add_column(justify='center')
+        info_panel_sma.add_column(justify='center')
+        info_panel_sma.add_row('[b]SMA20[/b]', '[b]SMA200[/b]')
+        info_panel_sma.add_row(values[3], values[4])
+
+        info_panel_above_below = Table.grid(expand=True)
+        info_panel_above_below.add_column(justify='center')
+        info_panel_above_below.add_column(justify='center')
+        info_panel_above_below.add_column(justify='center')
+        info_panel_above_below.add_column(justify='center')
+        info_panel_above_below.add_row('[b]Crossing Above[/b]', '[b]Currently Above[/b]', '[b]Crossing Below[/b]', '[b]Currently Below[/b]')
+        info_panel_above_below.add_row(Gui.true_false_color(values[5]), Gui.true_false_color(values[6]), Gui.true_false_color(values[7]), Gui.true_false_color(values[8]))
+
+        info_panel_condition_ema = Table.grid(expand=True)
+        info_panel_condition_ema.add_column(justify='center')
+        info_panel_condition_ema.add_row(values[9])
+
+        ema_sma_table = Table.grid(expand=True)
+        ema_sma_table.add_row(
+            Panel(info_panel_close, title='[b]Close', border_style='cyan'),
+            Panel(info_panel_ema, title='[b]EMA', border_style='cyan'),
+            Panel(info_panel_sma, title='[b]SMA', border_style='cyan'),
         )
 
-        return Panel(highlow_table, title='[b]Information[/b]')    
+        info_panel_macd = Table.grid(expand=True)
+        info_panel_macd.add_column(justify='center')
+        info_panel_macd.add_column(justify='center')
+        info_panel_macd.add_column(justify='center')
+        info_panel_macd.add_column(justify='center')
+        info_panel_macd.add_row('[b]MACD[/b]', '[b]Signal[/b]', '[b]Currently Above[/b]', '[b]Currently Below[/b]')
+        info_panel_macd.add_row(values[10], values[11], Gui.true_false_color(values[12]), Gui.true_false_color(values[13]))
+
+        info_panel_condition_macd = Table.grid(expand=True)
+        info_panel_condition_macd.add_column(justify='center')
+        info_panel_condition_macd.add_row(values[14])
+
+        info_table = Table.grid(expand=True)
+        info_table.add_row(ema_sma_table)
+        info_table.add_row(Panel(info_panel_above_below, title='[b]EMA Above/Below[/b]', border_style='cyan'))
+        info_table.add_row(Panel(info_panel_condition_ema, title='[b]Condition EMA[/b]', border_style='cyan'))
+        info_table.add_row('\n\n')
+        info_table.add_row(Panel(info_panel_macd, title='[b]MACD/Signal[/b]', border_style='cyan'))
+        info_table.add_row(Panel(info_panel_condition_macd, title='[b]Condition MACD/Signal[/b]', border_style='cyan'))
+                    
+        return Panel(info_table, title='[b]Information[/b]')    
+
+    def true_false_color(string) -> str:
+        '''Check if option is true or false'''
+
+        if string == 'True':
+            return '[b][green]True[/green]'
+        elif string == 'False':
+            return '[b][red]False[/red]'
+        else:
+            return string
 
     # Create settings panel
     def create_settings_panel(settings, title, color) -> Panel:
@@ -74,59 +132,74 @@ class Gui():
         settings_panel = Table.grid(expand=True)
         settings_panel.add_column('Settings', justify='center')
         settings_panel.add_row('\n')
-        settings_panel.add_row('[b]Sell Upper: [/b]' + str(settings[0]))
-        settings_panel.add_row('[b]Sell Lower: [/b]' + str(settings[1]))
-        settings_panel.add_row('[b]Trailing Stop Loss: [/b]' + str(settings[2]))
-        settings_panel.add_row('[b]Sell At Loss: [/b]' + str(settings[3]))
-        settings_panel.add_row('[b]Sell At Resistance: [/b]' + str(settings[4]))
-        settings_panel.add_row('[b]Trade Bull Only: [/b]' + str(not settings[5]))
-        settings_panel.add_row('[b]Buy Near High: [/b]' + str(not settings[6]))
-        settings_panel.add_row('[b]Use Buy MACD: [/b]' + str(not settings[7]))
-        settings_panel.add_row('[b]Use Buy OBV: [/b]' + str(not settings[8]))
-        settings_panel.add_row('[b]Use Buy Elder-Ray: [/b]' + str(not settings[9]))
-        settings_panel.add_row('[b]Sell Fibonacci Low: [/b]' + str(not settings[10]))
-        settings_panel.add_row('[b]Sell Lower Pcnt: [/b]' + str(not settings[11]))
-        settings_panel.add_row('[b]Sell Upper Pcnt: [/b]' + str(not settings[11]))
-        settings_panel.add_row('[b]Candlestick Reversal: [/b]' + str(not settings[12]))
-        settings_panel.add_row('[b]Telegram: [/b]' + str(not settings[13]))
-        settings_panel.add_row('[b]Log: [/b]' + str(not settings[14]))
-        settings_panel.add_row('[b]Tracker: [/b]' + str(not settings[15]))
-        settings_panel.add_row('[b]Auto restart Bot: [/b]' + str(settings[16]))
-        settings_panel.add_row('[b]Max Buy Size: [/b]' + str(settings[17]))
+        settings_panel.add_row('[b]Sell Upper: [/b]' + Gui.true_false_color(str(settings[0])))
+        settings_panel.add_row('[b]Sell Lower: [/b]' + Gui.true_false_color(str(settings[1])))
+        settings_panel.add_row('[b]Trailing Stop Loss: [/b]' + Gui.true_false_color(str(settings[2])))
+        settings_panel.add_row('[b]Sell At Loss: [/b]' + Gui.true_false_color(str(settings[3])))
+        settings_panel.add_row('[b]Sell At Resistance: [/b]' + Gui.true_false_color(str(settings[4])))
+        settings_panel.add_row('[b]Trade Bull Only: [/b]' + Gui.true_false_color(str(not settings[5])))
+        settings_panel.add_row('[b]Buy Near High: [/b]' + Gui.true_false_color(str(not settings[6])))
+        settings_panel.add_row('[b]Use Buy MACD: [/b]' + Gui.true_false_color(str(not settings[7])))
+        settings_panel.add_row('[b]Use Buy OBV: [/b]' + Gui.true_false_color(str(not settings[8])))
+        settings_panel.add_row('[b]Use Buy Elder-Ray: [/b]' + Gui.true_false_color(str(not settings[9])))
+        settings_panel.add_row('[b]Sell Fibonacci Low: [/b]' + Gui.true_false_color(str(not settings[10])))
+        settings_panel.add_row('[b]Sell Lower Pcnt: [/b]' + Gui.true_false_color(str(not settings[11])))
+        settings_panel.add_row('[b]Sell Upper Pcnt: [/b]' + Gui.true_false_color(str(not settings[11])))
+        settings_panel.add_row('[b]Candlestick Reversal: [/b]' + Gui.true_false_color(str(not settings[12])))
+        settings_panel.add_row('[b]Telegram: [/b]' + Gui.true_false_color(str(not settings[13])))
+        settings_panel.add_row('[b]Log: [/b]' + Gui.true_false_color(str(not settings[14])))
+        settings_panel.add_row('[b]Tracker: [/b]' + Gui.true_false_color(str(not settings[15])))
+        settings_panel.add_row('[b]Auto restart Bot: [/b]' + Gui.true_false_color(str(settings[16])))
+        settings_panel.add_row('[b]Max Buy Size: [/b]' + Gui.true_false_color(str(settings[17])))
 
         return Panel(settings_panel, border_style=color, title='[b]' + title + '[/b]')    
 
     # Create win loss panel        
-    def create_buy_sell_panel(margin, profit, action, last_action, title, color) -> Panel:
+    def create_status_panel(margin, profit, action, last_action, title, color) -> Panel:
         '''Display win or loss amount'''
         grid = Table.grid(expand=True)
         grid.add_column(justify='center')
+        grid.add_column(justify='center')
+        grid.add_column(justify='center')
+        grid.add_column(justify='center')
 
-        grid.add_row('\n[b]Last Action[/b]')
+        grid.add_row('[b]Last Action[/b]',
+                    '[b]Action[/b]',
+                    '[b]Margin[/b]',
+                    '[b]Profit[/b]')
+
         if last_action == 'SELL':
-            grid.add_row('[b]SELL[/b]', style='green')
+            last_action_row = '[green][b]SELL[/b][/green]'
         elif last_action == 'BUY':
-            grid.add_row('[b]BUY[/b]', style='red')
+            last_action_row = '[red][b]BUY[/b][/red]'
         elif last_action == 'WAIT':
-            grid.add_row('[b]WAIT[/b]', style='yellow')
+            last_action_row = '[yellow][b]WAIT[/b][/yellow]'
         else:
-            grid.add_row('[b]NONE[/b]', style='white')            
+            last_action_row = '[white][b]NONE[/b][/white]'
 
-        grid.add_row('\n[b]Action[/b]')
         if action == 'SELL':
-            grid.add_row('[b]SELL[/b]', style='green')
+            action_row = '[green][b]SELL[/b][/green]'
         elif action == 'BUY':
-            grid.add_row('[b]BUY[/b]', style='red')
+            action_row = '[red][b]BUY[/b][/red]'
         elif action == 'WAIT':
-            grid.add_row('[b]WAIT[/b]', style='yellow')
+            action_row = '[yellow][b]WAIT[/b][/yellow]'
         else:
-            grid.add_row('[b]NONE[/b]', style='white')
+            action_row = '[white][b]NONE[/b][/white]'
 
-        grid.add_row('\n[b]Margin[/b]')
-        grid.add_row(str(margin))
+        if margin > 0:
+            margin_str = '[green]' + str(margin) + '%'
+        else:
+            margin_str = '[red]' + str(margin) + '%'
 
-        grid.add_row('\n[b]Profit[/b]')
-        grid.add_row(str(profit))
+        if profit > 0:
+            profit_str = '[green]' + str(profit)
+        else:
+            profit_str = '[red]' + str(profit)
+
+        grid.add_row(last_action_row,
+                    action_row,
+                    margin_str,
+                    profit_str)
 
         return Panel(grid, border_style=color, title='[b]' + title + '[/b]')
 
@@ -150,7 +223,7 @@ class Gui():
 
         layout['body'].split(
             Layout(name='info'),
-            Layout(name='buy_sell_status')
+            Layout(name='status', size=4)
         )
 
         layout['side'].split(
