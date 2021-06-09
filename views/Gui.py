@@ -1,10 +1,14 @@
+import threading
+import time
 from datetime import datetime
 from numpy import exp
+from rich import progress
 from rich.console import Console
 from rich.table import Row, Table, Column
 from rich import print
 from rich.layout import Layout
 from rich.panel import Panel
+from rich.progress import Progress, BarColumn, TextColumn
 
 # Init rich console
 console = Console()
@@ -27,15 +31,28 @@ class Gui():
         return Panel(grid)
 
     # Create  footer
-    def create_footer(exchange, time) -> Panel:
+    def create_footer(exchange, time_left, time_now) -> Panel:
         """Display header"""
 
         grid = Table.grid(expand=True)
         grid.add_column(justify='left')
+        grid.add_column(justify='center')
         grid.add_column(justify='right')
+
+        time_left_progress = Progress(
+            TextColumn('{task.description}', justify='right'),
+            BarColumn(),
+            TextColumn('[progress.percentage]{task.percentage:>3.0f}% ')
+        )
+
+        time_left_progress.add_task('[b]Update in:[/b] ')
+
+        time_left_progress.advance(0, time_left.total_seconds())
+
         grid.add_row(
             '[b]Current Exchange:[/b] ' + exchange,
-            time
+            time_left_progress,
+            time_now
         )
         return Panel(grid)    
 

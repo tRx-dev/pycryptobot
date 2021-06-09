@@ -6,6 +6,7 @@ import random
 import re
 import sys
 import urllib3
+import telebot
 from datetime import datetime, timedelta
 from typing import Union
 from urllib3.exceptions import ReadTimeoutError
@@ -909,3 +910,27 @@ class PyCryptoBot():
         assert self._chat_client is not None
 
         self._chat_client.send(msg)
+
+    def handle_messages_telegram(self, messages):
+        for message in messages:
+            if message.text == '/status':
+                reply_message = 'BOT Status ' + str(self.getMarket()) +  '\nGranularity: ' + str(self.printGranularity()) + '\nLast Action: ' + str(self.getLastAction()) + '\nAction: ' 
+            elif message.text == '/price':
+                reply_message = str(self.getMarket()) + 'Price: ' +  + '\nLast Action: ' + str(self.getLastAction())
+            elif message.text == '/help':
+                reply_message = 'Available Commands: \n/status - Get BOT status\n/help - Show available commands\n/price - Show ' + str(self.getMarket()) + ' Price'
+            else:
+                reply_message = 'Unknown Command: ' + message.text + '\nPlease use /help to show all available commands.'
+
+            self._chat_client.bot.reply_to(message, reply_message)
+
+    def thread_telegram(self):
+        if self.disabletelegram or not self.telegram:
+            return
+        else:
+            print("start telebot")
+            self._chat_client.bot.set_update_listener(self.handle_messages_telegram)
+            self._chat_client.bot.polling()
+
+
+        

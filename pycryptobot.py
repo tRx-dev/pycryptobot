@@ -4,6 +4,7 @@ import functools
 import os
 import sched
 import sys
+import threading
 import time
 import pandas as pd
 from datetime import datetime
@@ -924,10 +925,20 @@ def executeJob(sc=None, app: PyCryptoBot = None, state: AppState = None, trading
         info_values = [str(truncate(price)), str(truncate(float(df_last['ema12'].values[0]))), str(truncate(float(df_last['ema26'].values[0]))), str(truncate(float(df_last['sma20'].values[0]))), str(truncate(float(df_last['sma200'].values[0]))), str(ema12gtema26co), str(ema12gtema26), str(ema12ltema26co), str(ema12ltema26), condition_ema_txt, str(truncate(float(df_last['macd'].values[0]))), str(truncate(float(df_last['signal'].values[0]))), str(macdgtsignal), str(macdltsignal), condition_macd_txt]
         layout['info'].update(Gui.create_info_panel(info_values))
         
-        layout['footer'].update(Gui.create_footer(app.getExchange(), now))
+        time_left = datetime.fromtimestamp(s.queue[0].time)
+        time_left = time_left - datetime.now()
+        print(time_left)
+        layout['footer'].update(Gui.create_footer(app.getExchange(), time_left / 100, now))
 
         # Print GUI
-        Gui.render_gui(layout)
+        threading.Timer(1, Gui.render_gui, args=(layout,)).start()
+
+    if app.disabletelegram or not app.telegram:
+            return
+    else:
+        thread_telegram_bot = threading.Thread(target=app.thread_telegram)
+        thread_telegram_bot.daemon = True
+        thread_telegram_bot.start()
 
 
 def main():

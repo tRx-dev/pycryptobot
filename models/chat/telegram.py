@@ -1,5 +1,7 @@
+from models.helper.LogHelper import Logger
 from re import compile as re_compile
 from requests import get, ConnectionError, exceptions, Timeout
+import telebot
 
 
 
@@ -8,6 +10,7 @@ class Telegram():
         self.api = 'https://api.telegram.org/bot'
         self._token = token
         self._client_id = str(client_id)
+        self.bot = telebot.TeleBot(self._token)
 
         p = re_compile(r"^\d{1,10}:[A-z0-9-_]{35,35}$")
         if not p.match(token):
