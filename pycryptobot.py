@@ -548,6 +548,14 @@ def executeJob(sc=None, app: PyCryptoBot = None, state: AppState = None, trading
 
                 Logger.info(output_text)
 
+                # Seasonal Autoregressive Integrated Moving Average (ARIMA) model (ML prediction for 3 intervals from now)
+                if not app.isSimulation():
+                    try:
+                        prediction = technical_analysis.seasonalARIMAModelPrediction(int(app.getGranularity() / 60) * 3) # 3 intervals from now
+                        Logger.info(f'Seasonal ARIMA model predicts the closing price will be {str(round(prediction[1], 2))} at {prediction[0]} (delta: {round(prediction[1] - price, 2)})')
+                    except:
+                        pass
+
                 if state.last_action == 'BUY':
                     # display support, resistance and fibonacci levels
                     Logger.info(technical_analysis.printSupportResistanceFibonacciLevels(price))
@@ -879,7 +887,7 @@ def executeJob(sc=None, app: PyCryptoBot = None, state: AppState = None, trading
         else:
             if state.last_buy_size > 0 and state.last_buy_price > 0 and price > 0 and state.last_action == 'BUY':
                 # show profit and margin if already bought
-                Logger.info(now + ' | ' + app.getMarket() + bullbeartext + ' | ' + app.printGranularity() + ' | Current Price: ' + str(price) + ' | Margin:' + str(margin) + ' | Profit:' + str(profit))
+                Logger.info(now + ' | ' + app.getMarket() + bullbeartext + ' | ' + app.printGranularity() + ' | Current Price: ' + str(price) + ' | Margin: ' + str(margin) + ' | Profit: ' + str(profit))
             else:
                 Logger.info(now + ' | ' + app.getMarket() + bullbeartext + ' | ' + app.printGranularity() + ' | Current Price: ' + str(price))
 
@@ -906,9 +914,9 @@ def executeJob(sc=None, app: PyCryptoBot = None, state: AppState = None, trading
                     s.enter(1, 1, executeJob, (sc, app, state, df))
 
         else:
-            # poll every 2 minutes
+            # poll every 1 minute
             list(map(s.cancel, s.queue))
-            s.enter(120, 1, executeJob, (sc, app, state))
+            s.enter(60, 1, executeJob, (sc, app, state))
 
     if app.useGui():
         layout = Gui.create_layout()
