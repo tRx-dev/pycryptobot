@@ -916,7 +916,7 @@ class PyCryptoBot():
             if message.text == '/status':
                 reply_message = 'BOT Status ' + str(self.getMarket()) +  '\nGranularity: ' + str(self.printGranularity()) + '\nLast Action: ' + str(self.getLastAction()) + '\nAction: ' 
             elif message.text == '/price':
-                reply_message = str(self.getMarket()) + 'Price: ' +  + '\nLast Action: ' + str(self.getLastAction())
+                reply_message = str(self.getMarket()) + 'Price: ' + '\nLast Action: ' + str(self.getLastAction())
             elif message.text == '/help':
                 reply_message = 'Available Commands: \n/status - Get BOT status\n/help - Show available commands\n/price - Show ' + str(self.getMarket()) + ' Price'
             else:

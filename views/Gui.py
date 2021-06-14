@@ -1,5 +1,7 @@
 import threading
+from threading import Timer
 import time
+import sched
 from datetime import datetime
 from numpy import exp
 from rich import progress
@@ -28,7 +30,7 @@ class Gui():
             '[b]PyCryptoBot[b]',
             version
         )
-        return Panel(grid)
+        return Panel(grid, border_style='bright_white')
 
     # Create  footer
     def create_footer(exchange, time_left, time_now) -> Panel:
@@ -42,19 +44,19 @@ class Gui():
         time_left_progress = Progress(
             TextColumn('{task.description}', justify='right'),
             BarColumn(),
-            TextColumn('[progress.percentage]{task.percentage:>3.0f}% ')
+            TextColumn(str(time_left.total_seconds() * 100).split(".")[0] + ' sec')
         )
 
-        time_left_progress.add_task('[b]Update in:[/b] ')
+        time_left_progress.add_task('[b]Update in:[/b] ', total=0.6)
 
-        time_left_progress.advance(0, time_left.total_seconds())
+        time_left_progress.advance(0, 0.6 - time_left.total_seconds())
 
         grid.add_row(
             '[b]Current Exchange:[/b] ' + exchange,
             time_left_progress,
             time_now
         )
-        return Panel(grid)    
+        return Panel(grid, border_style='bright_white')    
 
     # Create small info panel
     def create_small_info_panel(value, title, color) -> Panel:
@@ -105,9 +107,9 @@ class Gui():
 
         ema_sma_table = Table.grid(expand=True)
         ema_sma_table.add_row(
-            Panel(info_panel_close, title='[b]Close', border_style='cyan'),
-            Panel(info_panel_ema, title='[b]EMA', border_style='cyan'),
-            Panel(info_panel_sma, title='[b]SMA', border_style='cyan'),
+            Panel(info_panel_close, title='[b]Close', border_style='bright_cyan'),
+            Panel(info_panel_ema, title='[b]EMA', border_style='bright_cyan'),
+            Panel(info_panel_sma, title='[b]SMA', border_style='bright_cyan'),
         )
 
         info_panel_macd = Table.grid(expand=True)
@@ -124,11 +126,11 @@ class Gui():
 
         info_table = Table.grid(expand=True)
         info_table.add_row(ema_sma_table)
-        info_table.add_row(Panel(info_panel_above_below, title='[b]EMA Above/Below[/b]', border_style='cyan'))
-        info_table.add_row(Panel(info_panel_condition_ema, title='[b]Condition EMA[/b]', border_style='cyan'))
+        info_table.add_row(Panel(info_panel_above_below, title='[b]EMA Above/Below[/b]', border_style='bright_cyan'))
+        info_table.add_row(Panel(info_panel_condition_ema, title='[b]Condition EMA[/b]', border_style='bright_cyan'))
         info_table.add_row('\n\n')
-        info_table.add_row(Panel(info_panel_macd, title='[b]MACD/Signal[/b]', border_style='cyan'))
-        info_table.add_row(Panel(info_panel_condition_macd, title='[b]Condition MACD/Signal[/b]', border_style='cyan'))
+        info_table.add_row(Panel(info_panel_macd, title='[b]MACD/Signal[/b]', border_style='bright_cyan'))
+        info_table.add_row(Panel(info_panel_condition_macd, title='[b]Condition MACD/Signal[/b]', border_style='bright_cyan'))
                     
         return Panel(info_table, title='[b]Information[/b]')    
 
@@ -255,3 +257,30 @@ class Gui():
 
     def render_gui(layout):
         console.print(layout)
+
+    def thread_gui(app, price, bullbeartext, margin, profit, state, schedule):
+        layout = Gui.create_layout()
+        while True:
+            #print("test")
+            layout['header'].update(Gui.create_header(app.getVersionFromREADME()))
+            layout['current_price'].update(Gui.create_small_info_panel(str(price), 'Current Price', 'bright_green'))
+            layout['current_market'].update(Gui.create_small_info_panel(app.getMarket(), 'Market', 'bright_green'))
+            layout['granularity'].update(Gui.create_small_info_panel(app.printGranularity(), 'Granularity', 'bright_yellow'))
+            layout['bull_bear'].update(Gui.create_small_info_panel(bullbeartext, 'Bull/Bear', 'bright_yellow'))
+            layout['status'].update(Gui.create_status_panel(margin, profit, state.action, state.last_action, 'Status', 'bright_magenta'))
+
+            settings = [app.sellUpperPcnt(), app.sellLowerPcnt(), app.trailingStopLoss(), app.allowSellAtLoss(), app.sellAtResistance(), app.disableBullOnly(), app.disableBuyNearHigh(), app.disableBuyMACD(), app.disableBuyOBV(), app.disableBuyElderRay(), app.disableFailsafeFibonacciLow(), app.disableFailsafeLowerPcnt(), app.disableProfitbankReversal(), app.disabletelegram, app.disableLog(), app.disableTracker(), app.autoRestart(), app.getBuyMaxSize()]
+            layout['settings_info'].update(Gui.create_settings_panel(settings, 'Settings', 'bright_red'))
+
+            #print(price)
+                
+            #info_values = [str(truncate(price)), str(truncate(float(df_last['ema12'].values[0]))), str(truncate(float(df_last['ema26'].values[0]))), str(truncate(float(df_last['sma20'].values[0]))), str(truncate(float(df_last['sma200'].values[0]))), str(ema12gtema26co), str(ema12gtema26), str(ema12ltema26co), str(ema12ltema26), condition_ema_txt, str(truncate(float(df_last['macd'].values[0]))), str(truncate(float(df_last['signal'].values[0]))), str(macdgtsignal), str(macdltsignal), condition_macd_txt]
+            #layout['info'].update(Gui.create_info_panel(info_values))
+                
+            time_left = datetime.fromtimestamp(schedule.queue[0].time)
+            time_left = time_left - datetime.now()
+            layout['footer'].update(Gui.create_footer(app.getExchange(), time_left / 100, datetime.today().strftime('%Y-%m-%d %H:%M:%S')))
+
+            # Print GUI
+            Gui.render_gui(layout)
+            time.sleep(1)

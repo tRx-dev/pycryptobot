@@ -918,35 +918,36 @@ def executeJob(sc=None, app: PyCryptoBot = None, state: AppState = None, trading
             list(map(s.cancel, s.queue))
             s.enter(60, 1, executeJob, (sc, app, state))
 
-    if app.useGui():
-        layout = Gui.create_layout()
-        layout['header'].update(Gui.create_header(app.getVersionFromREADME()))
-        layout['current_price'].update(Gui.create_small_info_panel(str(price), 'Current Price', 'green'))
-        layout['current_market'].update(Gui.create_small_info_panel(app.getMarket(), 'Market', 'green'))
-        layout['granularity'].update(Gui.create_small_info_panel(app.printGranularity(), 'Granularity', 'yellow'))
-        layout['bull_bear'].update(Gui.create_small_info_panel(bullbeartext, 'Bull/Bear', 'yellow'))
-        layout['status'].update(Gui.create_status_panel(margin, profit, state.action, state.last_action, 'Status', 'red'))
+        if app.useGui():
+            threadList = threading.enumerate()
+            guiThreadRunning = False
+            for thread in threadList:
+                if thread.name == 'Gui_thread':
+                    guiThreadRunning = True
+                    
+            
+            if guiThreadRunning == False:
+                thread_gui = threading.Thread(target=Gui.thread_gui, args=(app, price, bullbeartext, margin, profit, state, s))
+                thread_gui.name = 'Gui_thread'
+                thread_gui.start()
+            
+            
+            
 
-        settings = [app.sellUpperPcnt(), app.sellLowerPcnt(), app.trailingStopLoss(), app.allowSellAtLoss(), app.sellAtResistance(), app.disableBullOnly(), app.disableBuyNearHigh(), app.disableBuyMACD(), app.disableBuyOBV(), app.disableBuyElderRay(), app.disableFailsafeFibonacciLow(), app.disableFailsafeLowerPcnt(), app.disableProfitbankReversal(), app.disabletelegram, app.disableLog(), app.disableTracker(), app.autoRestart(), app.getBuyMaxSize()]
-        layout['settings_info'].update(Gui.create_settings_panel(settings, 'Settings', 'red'))
+        #if app.disabletelegram or not app.telegram:
+        #        return
+        #else:
+        #threadList = threading.enumerate()
+            #guiThreadRunning = False
+            #for thread in threadList:
+              #  if thread.name == 'Gui_thread':
+             #       guiThreadRunning = True
+            
+            #if guiThreadRunning == False:
+        #    thread_telegram_bot = threading.Thread(target=app.thread_telegram)
+        #    thread_telegram_bot.daemon = True
+        #    thread_telegram_bot.start()
 
-        info_values = [str(truncate(price)), str(truncate(float(df_last['ema12'].values[0]))), str(truncate(float(df_last['ema26'].values[0]))), str(truncate(float(df_last['sma20'].values[0]))), str(truncate(float(df_last['sma200'].values[0]))), str(ema12gtema26co), str(ema12gtema26), str(ema12ltema26co), str(ema12ltema26), condition_ema_txt, str(truncate(float(df_last['macd'].values[0]))), str(truncate(float(df_last['signal'].values[0]))), str(macdgtsignal), str(macdltsignal), condition_macd_txt]
-        layout['info'].update(Gui.create_info_panel(info_values))
-        
-        time_left = datetime.fromtimestamp(s.queue[0].time)
-        time_left = time_left - datetime.now()
-        print(time_left)
-        layout['footer'].update(Gui.create_footer(app.getExchange(), time_left / 100, now))
-
-        # Print GUI
-        threading.Timer(1, Gui.render_gui, args=(layout,)).start()
-
-    if app.disabletelegram or not app.telegram:
-            return
-    else:
-        thread_telegram_bot = threading.Thread(target=app.thread_telegram)
-        thread_telegram_bot.daemon = True
-        thread_telegram_bot.start()
 
 
 def main():
